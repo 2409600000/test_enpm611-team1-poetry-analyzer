@@ -1,0 +1,35 @@
+erDiagram
+ ISSUE ||--o{ EVENT : contains
+ ISSUE ||--o{ ISSUE_LABEL : has
+LABEL ||--o{ISSUE_LABEL : assigned_to
+
+ ISSUE {
+    int number_identifier PK
+    string url
+    string creator
+    string title
+    string text
+    string state
+    datetime created_date
+    datetime updated_date
+    string timeline_url
+ }
+
+ EVENT {
+    int event_ID PK
+    int issue_number FK
+    string event_type
+    datetime event_date
+    string label
+    string comment
+ }
+
+ LABEL {
+   int label_ID PK
+   string name
+ }
+
+ISSUE_LABEL {
+    int issue_number PK, FK
+    int label_ID PK, FK
+ }
