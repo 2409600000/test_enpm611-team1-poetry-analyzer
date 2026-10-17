@@ -1,0 +1,39 @@
+classDiagram
+       Issue "1" *-- "0..*" Event : contains
+       Issue --> State : uses
+       DataLoader ..> Issue : creates
+        DataLoader : +String data_path
+        DataLoader : +init ()
+        DataLoader : +get_issues()
+        DataLoader : -_load()
+        class Issue {
+          +String url 
+          +String creator
+          +List<String> labels
+          +State state
+          +List<String> assignees
+          +String title
+          +String text
+          +int number
+          +datetime created_date
+          +String timeline_url
+          +List<Event> events
+
+          +__init__(jobj)
+          +from_json(jobj)
+        }
+        class State {
+        <<enumeration>>
+          open
+          closed
+        }
+        class Event {
+          +String event_type
+          +String author
+          +datetime event_date
+          +String label
+          +String comment
+
+          +__init__ (jobj)
+          +from_json(jobj)
+        }
