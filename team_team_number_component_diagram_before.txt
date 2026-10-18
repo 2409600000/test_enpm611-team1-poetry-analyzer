@@ -1,8 +1,0 @@
-flowchart LR
-    User[User / CLI] --> Run[run.py]
-    Run --> Config[config.py]
-    Run --> Example[example_analysis.py]
-    Example --> Loader[data_loader.py]
-    Loader --> Model[model.py: Issue, Event, State]
-    Loader --> JSON[(Poetry issues JSON dataset)]
-    Config --> Settings[Configuration / data path]
