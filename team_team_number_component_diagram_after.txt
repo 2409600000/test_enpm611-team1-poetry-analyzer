@@ -1,0 +1,18 @@
+flowchart LR
+    User[User / CLI] --> Run[run.py]
+    Run --> Config[config.py]
+    Run --> Example[ExampleAnalysis: feature 0]
+    Run -. planned feature 1 .-> Label[LabelResolutionAnalysis]
+    Run -. planned feature 2 .-> Contributor[ContributorActivityAnalysis]
+    Run -. planned feature 3 .-> Trend[DiscussionTrendAnalysis]
+    Example --> Loader[data_loader.py]
+    Label --> Loader
+    Contributor --> Loader
+    Trend --> Loader
+    Loader --> Model[model.py: Issue, Event, State]
+    Loader --> JSON[(Poetry issues JSON dataset)]
+    Config --> Settings[Configuration / data path]
+    Label --> Metrics[Resolution-time metrics]
+    Metrics --> Chart[Bar chart]
+    Contributor --> ContributorChart[Contributor activity chart]
+    Trend --> TrendChart[Monthly activity line chart]
