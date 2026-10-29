@@ -1,49 +1,122 @@
-# ENPM611 Project Application Template
+# ENPM611 Team 1: Poetry Issue Analyzer
 
-This is the template for the ENPM611 class project. Use this template in conjunction with the provided data to implement an application that analyzes GitHub issues for the [poetry](https://github.com/python-poetry/poetry/issues) Open Source project and generates interesting insights.
+A command-line application that analyzes the GitHub issues of the open-source
+[Poetry](https://github.com/python-poetry/poetry) project (issue and event data
+provided as a JSON file). It answers three questions about how issues are
+labeled, who works on them, and how issue activity changes over time, and shows
+the results as console output and matplotlib charts.
 
-This application template implements some of the basic functions:
-
-- `data_loader.py`: Utility to load the issues from the provided data file and returns the issues in a runtime data structure (e.g., objects)
-- `model.py`: Implements the data model into which the data file is loaded. The data can then be accessed by accessing the fields of objects.
-- `config.py`: Supports configuring the application via the `config.json` file. You can add other configuration paramters to the `config.json` file.
-- `run.py`: This is the module that will be invoked to run your application. Based on the `--feature` command line parameter, one of the three analyses you implemented will be run. You need to extend this module to call other analyses.
-
-With the utility functions provided, you should focus on implementing creative analyses that generate intersting and insightful insights.
-
-In addition to the utility functions, an example analysis has also been implemented in `example_analysis.py`. It illustrates how to use the provided utility functions and how to produce output.
+This repository is a fork of the ENPM611 application template. The design
+diagrams from Milestone 1 are in [`docs/`](docs/).
 
 ## Setup
 
-To get started, your team should create a fork of this repository. Then, every team member should clone your repository to their local computer. 
+**Python version:** Python 3.10 or newer (developed and tested with Python 3.12).
 
+**Dependencies:** `python-dateutil`, `numpy`, `pandas`, `matplotlib`
+(listed in `requirements.txt`).
 
-### Install dependencies
+1. Clone this repository.
+2. Create and activate a virtual environment in the repository root:
+   - macOS / Linux: `python3 -m venv venv && source venv/bin/activate`
+   - Windows (PowerShell): `python -m venv venv; venv\Scripts\Activate.ps1`
+3. Install the dependencies: `pip install -r requirements.txt`
 
-In the root directory of the application, create a virtual environment, activate that environment, and install the dependencies like so:
+### Configure the dataset path
+
+Download the issues JSON file from the project assignment in Canvas. Then tell
+the application where it is, using **either** way (the environment variable
+takes priority and keeps your personal path out of the repository):
+
+- Environment variable (recommended)
+  - macOS / Linux: `export ENPM611_PROJECT_DATA_PATH=/path/to/poetry_issues.json`
+  - Windows (PowerShell): `$env:ENPM611_PROJECT_DATA_PATH="C:\path\to\poetry_issues.json"`
+- or edit `ENPM611_PROJECT_DATA_PATH` in `config.json` (do not commit your personal path).
+
+Do not commit the data file. If the path is missing or wrong, the application
+prints a clear error message instead of crashing.
+
+## Running the features
 
 ```
-pip install -r requirements.txt
+python run.py --feature 1                    # label comparison (all labels)
+python run.py --feature 1 --label kind/bug   # one label in detail
+python run.py --feature 2                    # contributor activity (whole project)
+python run.py --feature 2 --user abn         # one contributor vs. the top contributors
+python run.py --feature 3                    # activity trends over time
+python run.py --feature 0                    # template example analysis
 ```
 
-### Download and configure the data file
+`--label` and `--user` are optional and case-insensitive. If the label or user
+is not found, the application suggests similar names and exits cleanly.
+Charts open in a matplotlib window; close the window to continue (feature 2
+shows two charts, one after the other).
 
-Download the data file (in `json` format) from the project assignment in Canvas and update the `config.json` with the path to the file. Note, you can also specify an environment variable by the same name as the config setting (`ENPM611_PROJECT_DATA_PATH`) to avoid committing your personal path to the repository.
+## The three analyses
 
+Every analysis prints its **question**, **method** and **finding** to the console.
 
-### Run an analysis
+### Feature 1: Label resolution (`label_resolution_analysis.py`)
+- **Question:** Do issue labels (e.g. `kind/bug`, `area/docs`) differ in how long
+  issues take to close and in how much discussion they get?
+- **Output (no input):** a table of the most common labels (median days to
+  close, comments per issue, distinct commenters per issue), a written finding,
+  and two bar charts (time to close; discussion per issue).
+- **Output (`--label`):** statistics for that label compared with all issues
+  (median/mean/90th percentile days to close, comments, top commenters), a
+  written finding, and a histogram of days to close with both medians marked.
 
-With everything set up, you should be able to run the existing example analysis:
+### Feature 2: Contributor activity (`contributor_activity_analysis.py`)
+- **Question:** Who does the work on the project, and do frequent commenters
+  also label or close issues?
+- **Output (no input):** a table of the top 10 contributors, Spearman rank
+  correlations between comments and triage actions, a written finding, a
+  grouped bar chart (comments / label actions / closes) and a scatter plot of
+  comments vs. triage actions.
+- **Output (`--user`):** the contributor's breakdown, rank and share of all
+  activity, a finding comparing their share of triage work with the top 10,
+  and a bar chart of the user next to the average of the top 10.
 
-```
-python run.py --feature 0
-```
+### Feature 3: Discussion trends (`discussion_trend_analysis.py`)
+- **Question:** How has issue activity changed over time, and how quickly do new
+  issues get a first response? (project-level, no input)
+- **Output:** a per-year table (issues opened/closed, comments, median first
+  response in hours), a written finding, and a three-panel line chart by
+  quarter (opened vs. closed, comment volume, median hours to first response).
 
-That will output basic information about the issues to the command line.
+## Known limitations and assumptions
 
+- **Bots are excluded** (authors ending in `[bot]`) from comment, contributor
+  and response-time statistics.
+- **Time to close** uses the date of the last `closed` event. Closed issues
+  without a closing event in the data (20 of 401 in `poetry_issues.json`) and
+  open issues are left out of timing statistics. Reopened issues use their latest close.
+- **Triage** (feature 2): labels and closes made by the issue's own reporter are
+  not counted, because issue templates attribute automatic labels to the
+  reporter and reporters closing their own issue is not triage work.
+- **First response** is the first human comment by someone other than the
+  issue creator.
+- Most issues in the dataset are from 2024, so earlier years have few issues
+  and their medians are less reliable (years with fewer than 10 issues are not
+  used in the first-vs-last comparison). The final quarter may be incomplete.
+- Medians for labels with few resolved issues are unreliable; feature 1 only
+  compares labels with at least 5 resolved issues.
+- Results depend on the dataset file used.
 
-## VSCode run configuration
+## Differences from the Milestone 1 design
 
-To make the application easier to debug, runtime configurations are provided to run each of the analyses you are implementing. When you click on the run button in the left-hand side toolbar, you can select to run one of the three analyses or run the file you are currently viewing. That makes debugging a little easier. This run configuration is specified in the `.vscode/launch.json` if you want to modify it.
+- `model.py` gained small helpers shared by all analyses (`Event.is_human`,
+  `Issue.closed_date`, `Issue.days_to_close()`, `Issue.human_comments()`) instead
+  of duplicating this logic in each analysis.
+- `data_loader.py` raises a clear error when the data path is not configured;
+  `run.py` now has a `main()` function and reports that error cleanly.
+- The sequence diagram (feature 2) also prints a written finding after the
+  correlations; the component structure is unchanged.
 
-The `.vscode/settings.json` also customizes the VSCode user interface sligthly to make navigation and debugging easier. But that is a matter of preference and can be turned off by removing the appropriate settings.
+## Team contributions
+
+| Member | Areas of contribution |
+|--------|-----------------------|
+| [Name 1] | [e.g. Milestone 1 diagrams, feature 1, tests] |
+| [Name 2] | [e.g. feature 2, README] |
+| [Name 3] | [e.g. feature 3, presentation] |
