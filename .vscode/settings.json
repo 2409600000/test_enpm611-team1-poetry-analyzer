@@ -31,4 +31,5 @@
     },
     "workbench.editor.wrapTabs": true,
     "debug.toolBarLocation": "docked",
+    "python-envs.defaultEnvManager": "ms-python.python:system",
 }
